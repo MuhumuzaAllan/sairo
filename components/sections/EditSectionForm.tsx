@@ -21,9 +21,12 @@ import Link from "next/link"
 import axios from "axios"
 import toast from "react-hot-toast"
 import { usePathname, useRouter } from 'next/navigation'
-import { ArrowLeft, Trash } from "lucide-react"
+import { ArrowLeft, Loader2, Trash } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import ResourceForm from "./ResourceForm"
+import MuxPlayer from '@mux/mux-player-react'
+import Delete from "../custom/Delete"
+import PublishButton from "../custom/PublishButton"
 
 
 const formSchema = z.object({
@@ -56,14 +59,16 @@ const EditSectionForm = ({ section, courseId, isCompleted }: EditSectionFormProp
         },
       })
 
+      const { isValid, isSubmitting} = form.formState;
+
      //define a submit handler
      const onSubmit = async (values: z.infer<typeof formSchema>) => {
       try {
-        await axios.patch(`/api/courses/${courseId}`, values);
-        toast.success("Course Updated");
+        await axios.post(`/api/courses/${courseId}/sections/${section.id}`, values);
+        toast.success("Section Updated");
         router.refresh();
       } catch (err) {
-        console.log("Failed to update the course", err);
+        console.log("Failed to update the section", err);
         toast.error("Something went wrong!");
       }
     };
@@ -82,8 +87,18 @@ const EditSectionForm = ({ section, courseId, isCompleted }: EditSectionFormProp
     </Button> 
     </Link>
       <div className="flex gap-4 items-start">
-        <Button variant='outline'>Publish</Button>
-        <Button ><Trash className="h-4 w-4" /></Button>
+        <PublishButton 
+        disabled={!isCompleted}
+        courseId={courseId}
+        sectionId={section.id}
+        isPublished={section.isPublished}
+        page='Section'
+        />
+        <Delete
+        item="section"
+        courseId={courseId}
+        sectionId={section.id} 
+        />
       </div>
     </div>
 
@@ -101,7 +116,7 @@ const EditSectionForm = ({ section, courseId, isCompleted }: EditSectionFormProp
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>Title <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="Ex: Introduction to Web development" {...field} />
               </FormControl>
@@ -116,7 +131,7 @@ const EditSectionForm = ({ section, courseId, isCompleted }: EditSectionFormProp
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <RichEditor 
                 placeholder="What is this section about?" 
@@ -129,17 +144,28 @@ const EditSectionForm = ({ section, courseId, isCompleted }: EditSectionFormProp
           )}
         />
        
+          { section.videoUrl && (
+            <div className="my-5 ">
+              <MuxPlayer 
+              playbackId={section.muxData?.playbackId || ''}
+              className="md:max-w-[600px]"
+
+              />
+            </div>
+          ) }
+
          <FormField
           control={form.control}
           name="videoUrl"
           render={({ field }) => (
             <FormItem className="flex flex-col ">
-              <FormLabel>Section Video</FormLabel>
+              <FormLabel>Section Video  <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <FileUpload 
                 value={field.value || ''}
                 onChange={ (url) => field.onChange(url) }
                 endpoint='sectionVideo'
+                page='Edit Section'
                 />
               </FormControl>
              
@@ -177,7 +203,13 @@ const EditSectionForm = ({ section, courseId, isCompleted }: EditSectionFormProp
                     Cancel
                 </Button>
             </Link>
-          <Button type="submit" className="text-black font-bold">Save</Button>
+          <Button 
+          type="submit" 
+          className="text-black font-bold"
+          disabled={!isValid || isSubmitting}
+          >
+            { isSubmitting ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save' }
+          </Button>
         </div>
         
       </form>

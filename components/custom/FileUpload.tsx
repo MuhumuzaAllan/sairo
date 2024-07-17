@@ -10,12 +10,13 @@ interface FileUploadProps {
     value:      string;
     onChange:   (url?: string) => void;
     endpoint:   keyof typeof ourFileRouter;
+    page:       string;
 }
 
-const FileUpload = ({ value, onChange, endpoint }: FileUploadProps) => {
+const FileUpload = ({ value, onChange, endpoint, page }: FileUploadProps) => {
   return (
     <div className='flex flex-col gap-2'>
-        { value !== '' && (
+        { page === 'Edit Course' && value !== '' && (
           <Image 
         src={value}
         alt='image'
@@ -24,6 +25,10 @@ const FileUpload = ({ value, onChange, endpoint }: FileUploadProps) => {
         className='w-[280px] h-[200px] object-cover rounded-xl '
         />   
         )}
+
+        { page === 'Edit Section' && value !== '' && (
+          <p className='text-sm font-medium'> {value} </p>
+        ) }
        
       <UploadDropzone
     endpoint={endpoint}

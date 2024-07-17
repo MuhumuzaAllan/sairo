@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,6 +21,8 @@ import axios from "axios"
 import toast from "react-hot-toast"
 import { usePathname, useRouter } from 'next/navigation'
 import { Trash } from "lucide-react"
+import Delete from "../custom/Delete"
+import PublishButton from "../custom/PublishButton"
 
 const formSchema = z.object({
   title:            z.string().min(2, {
@@ -47,9 +48,10 @@ interface EditFormCourseProps {
       value: string, // categoryId
       subCategories: { label: string; value: string }[];
     }[];
-    levels:       { label: string; value: string}[]
+    levels:       { label: string; value: string}[];
+    isCompleted:  boolean;
 }
-const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => {
+const EditCourseForm = ({ course, categories, levels, isCompleted }: EditFormCourseProps) => {
 
     const router = useRouter();
     const pathname = usePathname();
@@ -64,7 +66,7 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           categoryId:           course.categoryId,
           subCategoryId:        course.subCategoryId,
           levelId:              course.levelId || '',
-          imageUrl:             course.imgUrl || '',
+          imageUrl:             course.imageUrl || '',
           price:                course.price || undefined,
 
         },
@@ -104,8 +106,16 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
         }
       </div>
       <div className="flex gap-4 items-start">
-        <Button variant='outline'>Publish</Button>
-        <Button ><Trash className="h-4 w-4" /></Button>
+        <PublishButton 
+        disabled={!isCompleted}
+        courseId={course.id}
+        isPublished={course.isPublished}
+        page='Course'
+        />
+        <Delete
+        item="course"
+        courseId={course.id}
+        />
       </div>
     </div>
      <Form {...form}>
@@ -115,7 +125,7 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>Title <span className="text-red-500">*</span> </FormLabel>
               <FormControl>
                 <Input placeholder="Ex: Web development for beginners" {...field} />
               </FormControl>
@@ -143,7 +153,7 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Description <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <RichEditor 
                 placeholder="What is this course about?" 
@@ -161,7 +171,7 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           name="categoryId"
           render={({ field }) => (
             <FormItem className="flex flex-col ">
-              <FormLabel>Category</FormLabel>
+              <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <ComboBox 
                 options={categories} 
@@ -177,7 +187,7 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           name="subCategoryId"
           render={({ field }) => (
             <FormItem className="flex flex-col ">
-              <FormLabel>Subcategory</FormLabel>
+              <FormLabel>Subcategory <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <ComboBox 
                 options={categories.find((category) => category.value === form.watch('categoryId'))?.subCategories || []} 
@@ -193,7 +203,7 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           name="levelId"
           render={({ field }) => (
             <FormItem className="flex flex-col ">
-              <FormLabel>Level</FormLabel>
+              <FormLabel>Level <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <ComboBox 
                 options={levels} 
@@ -211,12 +221,13 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           name="imageUrl"
           render={({ field }) => (
             <FormItem className="flex flex-col ">
-              <FormLabel>Course Banner</FormLabel>
+              <FormLabel>Course Banner <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <FileUpload 
                 value={field.value || ''}
                 onChange={ (url) => field.onChange(url) }
                 endpoint='courseBanner'
+                page='Edit Course'
                 />
               </FormControl>
              
@@ -229,7 +240,7 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           name="price"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Price</FormLabel>
+              <FormLabel>Price <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <Input 
                 type="number"
@@ -243,8 +254,15 @@ const EditCourseForm = ({ course, categories, levels }: EditFormCourseProps) => 
           )}
         />
         <div className="flex gap-5">
-          <Link href='instructor/courses'><Button variant='outline' type="button">Cancel</Button></Link>
-          <Button type="submit" className="text-black font-bold">Save</Button>
+          <Link href='instructor/courses'>
+          <Button variant='outline' type="button">
+            Cancel
+          </Button>
+          </Link>
+          <Button type="submit"
+           className="text-black font-bold">
+            Save
+          </Button>
         </div>
         
       </form>

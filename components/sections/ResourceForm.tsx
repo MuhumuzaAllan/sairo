@@ -18,7 +18,7 @@ import {
   import { Input } from "@/components/ui/input"
 import toast from 'react-hot-toast'
 import axios from 'axios'
-import { PlusCircle } from 'lucide-react'
+import { File, Loader2, PlusCircle, X } from 'lucide-react'
 import FileUpload from '../custom/FileUpload'
 
 const formSchema = z.object({
@@ -48,18 +48,34 @@ const ResourceForm = ( {section, courseId, }: ResourceFormProps ) => {
     },
   })
 
+  const { isValid, isSubmitting } = form.formState
+
   // 2. Define a submit handler.
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await axios.post(`/api/courses/${courseId}/sections`, values)
-      router.push(`/instructor/courses/${courseId}/sections/${response.data.id}`)
-      toast.success('Section created successfully! 😊')
+      await axios.post(`/api/courses/${courseId}/sections/${section.id}/resources`, values)
+      
+      toast.success('Resource added successfully! 😊')
+      form.reset();
+      router.refresh();
     } catch (error) {
-      console.log('Failed to create section', error)
+      console.log('Failed to add resource', error)
       toast.error('Something went wrong')
     }
   }
 
+  //delete function
+  const onDelete = async (id: string) => {
+    try {
+      await axios.post(`/api/courses/${courseId}/sections/${section.id}/resources/${id}`)
+      
+      toast.success('Resource deleted successfully! 😊')
+      router.refresh();
+    } catch (error) {
+      console.log('Failed to delete resource', error)
+      toast.error('Something went wrong')
+    }
+  }
   
   return (
     <>
@@ -70,6 +86,23 @@ const ResourceForm = ( {section, courseId, }: ResourceFormProps ) => {
     <p className="text-sm font-medium mt-2">
         Add resources to this section to help students learn better
     </p>
+
+    <div className='mt-5  flex flex-col gap-5 '>
+      { section.resources.map((resource) => (
+        <div className='flex justify-between bg-[#fff8eb] rounded-lg text-sm font-medium p-3'>
+          <div className="flex items-center ">
+            <File  className='h-4 w-4 mr-4'/>
+            {resource.name}
+          </div>
+          <button 
+          className='text-[#fdab04]' 
+          disabled={isSubmitting} 
+          onClick={() => onDelete(resource.id)}
+          > 
+          { isSubmitting ? <Loader2 className='h-4 w-4 animate-spin' /> : <X  className='h-4 w-4'/> }   
+          </button>
+        </div>
+      )) }
 
       <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 my-5">
@@ -98,6 +131,7 @@ const ResourceForm = ( {section, courseId, }: ResourceFormProps ) => {
                 value={field.value || ''}
                 onChange={ (url) => field.onChange(url) }
                 endpoint='sectionResource'
+                page='Edit Section'
                 />
               </FormControl>
              
@@ -105,13 +139,15 @@ const ResourceForm = ( {section, courseId, }: ResourceFormProps ) => {
             </FormItem>
           )}
         />
-            <Button type="submit">Upload</Button>
+            <Button type="submit" disabled={!isValid || isSubmitting}>
+            { isSubmitting ? <Loader2 className='h-4 w-4 animate-spin' /> : 'Upload' } 
+            </Button>
         
       </form>
     </Form>
+    </div>
+
     </>
-        
-    
   )
 }
 
